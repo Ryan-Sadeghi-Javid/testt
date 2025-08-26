@@ -1,39 +1,27 @@
-## src/money.py
-```python
-from decimal import Decimal, ROUND_HALF_UP, getcontext
-from dataclasses import dataclass
+# CLI OOP Banking System
 
-getcontext().prec = 28
+## Goal
+Model basic retail banking with clean OOP and a small CLI.
 
-@dataclass(frozen=True)
-class Money:
-    amount: Decimal
-    currency: str = "CAD"
+### Core Requirements
+- Two account types: **Checking** and **Savings** (both inherit from `Account`).
+- Operations: **open**, **deposit**, **withdraw**, **transfer**, **balance**, **statement**.
+- Savings: monthly interest (simple compounding when `apply_interest` is called).
+- Checking: optional overdraft protection flag/limit.
+- All money handled with a `Money` value object (decimal, currency-aware).
+- In-memory only (no DB). Collisions & validation must be handled.
 
-    @staticmethod
-    def parse(text: str, currency: str = "CAD") -> "Money":
-        # Allows "12.34" style input
-        return Money(Decimal(text).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP), currency)
+### CLI Commands
+- `open <type:checking|savings> <holder_name>`
+- `deposit <account_id> <amount>`
+- `withdraw <account_id> <amount>`
+- `transfer <from_id> <to_id> <amount>`
+- `balance <account_id>`
+- `statement <account_id>`
+- `apply_interest`  (applies to all savings accounts)
 
-    def __add__(self, other: "Money") -> "Money":
-        self._ensure_same_currency(other)
-        return Money((self.amount + other.amount).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP), self.currency)
-
-    def __sub__(self, other: "Money") -> "Money":
-        self._ensure_same_currency(other)
-        return Money((self.amount - other.amount).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP), self.currency)
-
-    def gte(self, other: "Money") -> bool:
-        self._ensure_same_currency(other)
-        return self.amount >= other.amount
-
-    def lt(self, other: "Money") -> bool:
-        self._ensure_same_currency(other)
-        return self.amount < other.amount
-
-    def _ensure_same_currency(self, other: "Money"):
-        if self.currency != other.currency:
-            raise ValueError("Currency mismatch")
-
-    def __str__(self) -> str:
-        return f"{self.currency} {self.amount:.2f}"
+### Run
+```bash
+python -m venv .venv && source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+python -m src.cli open checking "Alice"
